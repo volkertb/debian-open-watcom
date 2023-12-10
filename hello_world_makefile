@@ -1,0 +1,5 @@
+all:
+	gcc hello_world.c -o hello.exe
+
+clean:
+	rm hello.exe
