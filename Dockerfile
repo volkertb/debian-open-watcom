@@ -33,3 +33,6 @@ RUN apt -y remove file
 RUN make -C /tmp -f hello_world_makefile clean
 RUN rm /tmp/hello_world.c
 RUN rm /tmp/hello_world_makefile
+
+# `ps` is required when using this image for a dev container
+RUN apt -y install procps
