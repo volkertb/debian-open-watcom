@@ -1,26 +1,43 @@
 FROM debian:12.2-slim
 
-ARG DJGPP_RELEASE_VERSION=v3.4
-ARG DJGPP_TARBALL_NAME=djgpp-linux64-gcc1220.tar.bz2
-ARG DJGPP_TARBALL_SHA256=8464f17017d6ab1b2bb2df4ed82357b5bf692e6e2b7fee37e315638f3d505f00
+ARG OW2_RELEASE_VERSION=2023-12-01-Build
+ARG OW2_INSTALLER_NAME=open-watcom-2_0-c-linux-x64
+ARG OW2_INSTALLER_SHA256=1781635c1cf76d3e7232b4de137372dccf00b166b1271359f969c50dda7dde61
 
-# Download, verify and unpack the prebuilt DJGPP binaries for Linux
+# Download, verify and run the prebuilt Open Watcom v2 installer for Linux
 RUN apt -y update
 RUN apt -y install wget
-RUN wget -P /tmp https://github.com/andrewwutw/build-djgpp/releases/download/${DJGPP_RELEASE_VERSION}/${DJGPP_TARBALL_NAME}
-RUN echo "${DJGPP_TARBALL_SHA256}  /tmp/${DJGPP_TARBALL_NAME}" | sha256sum --check
+RUN wget -P /tmp https://github.com/open-watcom/open-watcom-v2/releases/download/${OW2_RELEASE_VERSION}/${OW2_INSTALLER_NAME}
+RUN echo "${OW2_INSTALLER_SHA256}  /tmp/${OW2_INSTALLER_NAME}" | sha256sum --check
+RUN chmod +x /tmp/${OW2_INSTALLER_NAME}
+
+# Workaround(s), see https://github.com/open-watcom/open-watcom-v2/wiki/Notes#core-dump-in-linux-installer
+
+# Doesn't work
+TERMINFO=/lib/terminfo
+
+# Doesn't work either (even when I try other values such as `xterm`, `xterm-256color`, etc.)
+export TERM=vt100
+
+# This one keeps failing with `Floating point exception (core dumped)`
+RUN /tmp/${OW2_INSTALLER_NAME} -i
+
+# FIXME: update the rest below once we finally get the installer to work in a Dockerfile.
+
+RUN 0<&- script -qefc "/tmp/${OW2_INSTALLER_NAME} -i" /dev/null | cat
+RUN ls -lh /usr/bin/
+RUN ls -lh /usr/bin/watcom
 RUN apt -y install lbzip2
-RUN tar -xf /tmp/${DJGPP_TARBALL_NAME} -C /opt
-RUN rm /tmp/${DJGPP_TARBALL_NAME}
+RUN tar -xf /tmp/${OW2_INSTALLER_NAME} -C /opt
+RUN rm /tmp/${OW2_INSTALLER_NAME}
 RUN apt -y remove wget lbzip2
 
+# FIXME: rewrite the following ENV commands to do the same thing that `source owsetenv.sh` would do.
 # Make DJGPP available in environment, as instructed at https://github.com/andrewwutw/build-djgpp#using-djgpp-compiler
 ENV PATH=/opt/djgpp/i586-pc-msdosdjgpp/bin/:$PATH
 ENV GCC_EXEC_PREFIX=/opt/djgpp/lib/gcc/
 
-# Most projects that need to be built with DJGPP will likely also need GNU Make, so let's include it in this image.
-RUN apt -y install make
-
+# FIXME: update Makefile to be compatible with WMAKE instead of GNU Make
 # Test compilation with a Hello World source file and a corresponding Makefile
 ADD hello_world.c /tmp
 ADD hello_world_makefile /tmp
