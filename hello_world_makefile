@@ -1,5 +1,17 @@
-all:
-	gcc hello_world.c -o hello.exe
+obj = hello.obj
+bin = hello.exe
 
-clean:
-	rm hello.exe
+CC = wcc386
+CFLAGS = -zq -w3 -bt=dos -d2
+LD = wlink
+LDFLAGS = system causeway
+
+hello.exe: hello.obj
+	$(LD) name $@ file { $(obj) } $(LDFLAGS)
+
+hello.obj:
+	$(CC) -fo=$@ $(CFLAGS) hello_world.c
+
+clean: .symbolic
+	rm *.obj
+	rm $(bin)
