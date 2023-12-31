@@ -1,4 +1,4 @@
-FROM debian:12.2-slim
+FROM debian:12.4-slim
 
 ARG OW2_RELEASE_VERSION=2023-12-01-Build
 ARG OW2_INSTALLER_NAME=open-watcom-2_0-c-linux-x64
