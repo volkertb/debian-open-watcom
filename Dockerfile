@@ -19,8 +19,10 @@ TERMINFO=/lib/terminfo
 # Doesn't work either (even when I try other values such as `xterm`, `xterm-256color`, etc.)
 export TERM=vt100
 
-# This one keeps failing with `Floating point exception (core dumped)`
-RUN /tmp/${OW2_INSTALLER_NAME} -i
+# Run the installer with `script` as a workaround for `Floating point exception (core dumped)`
+# See also https://github.com/open-watcom/open-watcom-v2/wiki/Notes#core-dump-in-linux-installer
+ARG TERM=vt100
+RUN script -c "/tmp/${OW2_INSTALLER_NAME} -i"
 
 # FIXME: update the rest below once we finally get the installer to work in a Dockerfile.
 
