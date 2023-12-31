@@ -24,8 +24,9 @@ RUN ls -lh ${OW2_DESTINATION_DIR}
 # Verify that the /h (sub)directory with header files was also installed (apparently required `FullInstall=1`)
 RUN ls -lh ${OW2_DESTINATION_DIR}/h
 
+RUN rm /tmp/${OW2_INSTALLER_NAME}
+
 RUN apt -y purge wget
-RUN apt -y autoremove
 
 # Setting these ENVs is safer than having an entrypoint script sourcing ${OW2_DESTINATION_DIR}/owsetenv.sh,
 # since entrypoints can be bypassed.
@@ -36,8 +37,6 @@ ENV WATCOM=$OW2_DESTINATION_DIR
 ENV EDPATH=$OW2_DESTINATION_DIR/eddat
 ENV WIPFC=$OW2_DESTINATION_DIR/wipfc
 
-
-# FIXME: update Makefile to be compatible with WMAKE instead of GNU Make
 # Test compilation with a Hello World source file and a corresponding Makefile
 ADD hello_world.c /tmp
 ADD hello_world_makefile /tmp
@@ -46,8 +45,6 @@ RUN wmake -f ./hello_world_makefile
 
 # Verify that the compiled binary is actually a DOS executable
 RUN apt -y install file
-RUN echo test1234
-RUN file /tmp/hello.exe
 RUN file /tmp/hello.exe | grep "MS-DOS"
 RUN apt -y purge file
 RUN wmake -f hello_world_makefile clean
@@ -56,3 +53,5 @@ RUN rm /tmp/hello_world_makefile
 
 # `ps` is required when using this image for a dev container
 RUN apt -y install procps
+
+RUN apt -y autoremove
