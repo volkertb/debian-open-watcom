@@ -32,7 +32,7 @@ RUN ls -lh /usr/bin/watcom
 RUN apt -y install lbzip2
 RUN tar -xf /tmp/${OW2_INSTALLER_NAME} -C /opt
 RUN rm /tmp/${OW2_INSTALLER_NAME}
-RUN apt -y remove wget lbzip2
+RUN apt -y purge wget lbzip2
 
 # FIXME: rewrite the following ENV commands to do the same thing that `source owsetenv.sh` would do.
 # Make DJGPP available in environment, as instructed at https://github.com/andrewwutw/build-djgpp#using-djgpp-compiler
@@ -48,7 +48,7 @@ RUN make -C /tmp -f hello_world_makefile
 # Verify that the compiled binary is actually a DOS executable
 RUN apt -y install file
 RUN file /tmp/hello.exe | grep "MS-DOS"
-RUN apt -y remove file
+RUN apt -y purge file
 RUN make -C /tmp -f hello_world_makefile clean
 RUN rm /tmp/hello_world.c
 RUN rm /tmp/hello_world_makefile
