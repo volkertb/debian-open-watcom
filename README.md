@@ -11,3 +11,7 @@ to built, such as some open source DOS projects.
 ```shell
 docker build . -t open-watcom-dev-container-v2
 ```
+
+## Other toolchains
+
+There is also a DJGPP variant: https://github.com/volkertb/debian-djgpp
