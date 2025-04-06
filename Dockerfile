@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
-FROM debian:12.4-slim
+FROM debian:12.10-slim
 
-ARG OW2_RELEASE_VERSION=2023-12-01-Build
+ARG OW2_RELEASE_VERSION=2025-03-01-Build
 ARG OW2_INSTALLER_NAME=open-watcom-2_0-c-linux-x64
-ARG OW2_INSTALLER_SHA256=1781635c1cf76d3e7232b4de137372dccf00b166b1271359f969c50dda7dde61
+ARG OW2_INSTALLER_SHA256=6f81473452fb15c4386ac3ed1049a9f3c0c7d8f8449a099750b212ae890d1636
 ARG OW2_DESTINATION_DIR=/opt/watcom
 
 # Download and verify Open Watcom v2 installer for Linux
-RUN apt -y update
-RUN apt -y install wget
-RUN wget -P /tmp https://github.com/open-watcom/open-watcom-v2/releases/download/${OW2_RELEASE_VERSION}/${OW2_INSTALLER_NAME}
-RUN echo "${OW2_INSTALLER_SHA256}  /tmp/${OW2_INSTALLER_NAME}" | sha256sum --check
+ADD --checksum=sha256:${OW2_INSTALLER_SHA256} https://github.com/open-watcom/open-watcom-v2/releases/download/${OW2_RELEASE_VERSION}/${OW2_INSTALLER_NAME} /tmp
+
 RUN chmod +x /tmp/${OW2_INSTALLER_NAME}
 
 # Run the installer with `script` as a workaround for `Floating point exception (core dumped)`
@@ -26,8 +24,6 @@ RUN ls -lh ${OW2_DESTINATION_DIR}/h
 
 RUN rm /tmp/${OW2_INSTALLER_NAME}
 
-RUN apt -y purge wget
-
 # Setting these ENVs is safer than having an entrypoint script sourcing ${OW2_DESTINATION_DIR}/owsetenv.sh,
 # since entrypoints can be bypassed.
 # Open Watcom Build Environment
@@ -42,6 +38,8 @@ ADD hello_world.c /tmp
 ADD hello_world_makefile /tmp
 WORKDIR /tmp
 RUN wmake -f ./hello_world_makefile
+
+RUN apt -y update
 
 # Verify that the compiled binary is actually a DOS executable
 RUN apt -y install file
