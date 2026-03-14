@@ -3,16 +3,16 @@
 ARG OW2_DESTINATION_DIR=/opt/watcom
 
 FROM debian:13.3-slim AS base
-ARG OW2_RELEASE_VERSION=2025-03-01-Build
+ARG OW2_RELEASE_VERSION=2026-03-01-Build
 ARG OW2_INSTALLER_NAME=open-watcom-2_0-c-linux-x64
-ARG OW2_INSTALLER_SHA256=6f81473452fb15c4386ac3ed1049a9f3c0c7d8f8449a099750b212ae890d1636
+ARG OW2_INSTALLER_SHA256=70bac878e5bc6b818bbccb6b9d5576d2f8aa4b1eb2df81552d5c0b9ec0f8fa66
 ARG OW2_DESTINATION_DIR
 
 FROM base AS download-and-test-ow2
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt -y update && apt -y install wget file
+    apt -y update && apt -y install wget file unzip
 
 # Download and verify Open Watcom v2 installer for Linux
 RUN --mount=type=cache,target=/Downloads \
@@ -24,9 +24,8 @@ RUN --mount=type=cache,target=/Downloads \
 
 # Run the installer with `script` as a workaround for `Floating point exception (core dumped)`
 # See also https://github.com/open-watcom/open-watcom-v2/wiki/Notes#core-dump-in-linux-installer
-ARG TERM=vt100
 RUN --mount=type=cache,target=/Downloads \
-    script -c "/Downloads/${OW2_INSTALLER_NAME} -i -dDstDir=${OW2_DESTINATION_DIR} -dFullInstall=1"
+    unzip /Downloads/${OW2_INSTALLER_NAME} -d $OW2_DESTINATION_DIR
 
 # Verify that the installation was indeed successful
 RUN ls -lh ${OW2_DESTINATION_DIR}
@@ -37,11 +36,15 @@ RUN ls -lh ${OW2_DESTINATION_DIR}/h
 # Setting these ENVs is safer than having an entrypoint script sourcing ${OW2_DESTINATION_DIR}/owsetenv.sh,
 # since entrypoints can be bypassed.
 # Open Watcom Build Environment
-ENV PATH=$OW2_DESTINATION_DIR/binl64:/opt/watcom/binl:$PATH
+ENV PATH=$OW2_DESTINATION_DIR/binl64:$OW2_DESTINATION_DIR/binl:$PATH
 ENV INCLUDE=$OW2_DESTINATION_DIR/lh:$INCLUDE
 ENV WATCOM=$OW2_DESTINATION_DIR
 ENV EDPATH=$OW2_DESTINATION_DIR/eddat
 ENV WIPFC=$OW2_DESTINATION_DIR/wipfc
+
+ADD make_watcom_files_executable.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/make_watcom_files_executable.sh
+RUN make_watcom_files_executable.sh
 
 # Test compilation with a Hello World source file and a corresponding Makefile
 ADD hello_world.c /tmp
@@ -69,7 +72,7 @@ RUN --mount=type=cache,target=/Downloads \
         && echo "${JWASM_ARCHIVE_SHA256}  /Downloads/${JWASM_ARCHIVE}" | sha256sum -c -)
 
 WORKDIR /tmp
-RUN --mount=type=cache,target=/Downloads ls -lh /Downloads && tar xf /Downloads/${JWASM_ARCHIVE}
+RUN --mount=type=cache,target=/Downloads tar xf /Downloads/${JWASM_ARCHIVE}
 WORKDIR /tmp/JWasm-${JWASM_VERSION}
 RUN make -f GccUnix.mak
 RUN mv build/GccUnixR/jwasm /usr/local/bin/
@@ -85,7 +88,7 @@ COPY --from=download-and-test-ow2 ${OW2_DESTINATION_DIR} ${OW2_DESTINATION_DIR}
 # Setting these ENVs is safer than having an entrypoint script sourcing ${OW2_DESTINATION_DIR}/owsetenv.sh,
 # since entrypoints can be bypassed.
 # Open Watcom Build Environment
-ENV PATH=$OW2_DESTINATION_DIR/binl64:/opt/watcom/binl:$PATH
+ENV PATH=$OW2_DESTINATION_DIR/binl64:$OW2_DESTINATION_DIR/binl:$PATH
 ENV INCLUDE=$OW2_DESTINATION_DIR/lh:$INCLUDE
 ENV WATCOM=$OW2_DESTINATION_DIR
 ENV EDPATH=$OW2_DESTINATION_DIR/eddat
@@ -136,7 +139,7 @@ COPY --from=download-and-test-ow2 ${OW2_DESTINATION_DIR} ${OW2_DESTINATION_DIR}
 # Setting these ENVs is safer than having an entrypoint script sourcing ${OW2_DESTINATION_DIR}/owsetenv.sh,
 # since entrypoints can be bypassed.
 # Open Watcom Build Environment
-ENV PATH=$OW2_DESTINATION_DIR/binl64:/opt/watcom/binl:$PATH
+ENV PATH=$OW2_DESTINATION_DIR/binl64:$OW2_DESTINATION_DIR/binl:$PATH
 ENV INCLUDE=$OW2_DESTINATION_DIR/lh:$INCLUDE
 ENV WATCOM=$OW2_DESTINATION_DIR
 ENV EDPATH=$OW2_DESTINATION_DIR/eddat
