@@ -62,9 +62,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt -y update && apt -y install build-essential wget
 
 # Download and verify JWasm source code, so we can compile it for Linux
-ARG JWASM_VERSION=2.20
+ARG JWASM_VERSION=2.21pre1
 ARG JWASM_ARCHIVE=v${JWASM_VERSION}.tar.gz
-ARG JWASM_ARCHIVE_SHA256=a9b78dfe18af47ea9eb55fdee0bf1fb5b8b3d9a8f3d0a490cf6b2b984151ccde
+ARG JWASM_ARCHIVE_SHA256=e67aace88e6f8989f9695514747d43ff37e55c6012689d90bd01cd4c560df205
 RUN --mount=type=cache,target=/Downloads \
     echo "${JWASM_ARCHIVE_SHA256}  /Downloads/${JWASM_ARCHIVE}" | sha256sum -c - \
     || (wget -O /Downloads/${JWASM_ARCHIVE} \
